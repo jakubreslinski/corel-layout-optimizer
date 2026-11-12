@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Application runtime and generated data
+runtime/
+experiments/*.csv
+parameter_search/artifacts/*
+zlecenie_testowe.json
+*.json
+
+!pyproject.toml
+Pliki_Zrodlowe/*
+!Pliki_Zrodlowe/.gitkeep
