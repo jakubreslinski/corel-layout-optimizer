@@ -25,13 +25,29 @@ python main.py zlecenie.json
 
 ### Generate AI training layouts
 
-Generate a fixed number of reproducible orders using a roll width of 443:
+Generate a fixed number of reproducible orders using a roll width of 443.
+Each order is saved as its own JSON file (`order_0001.json`, `order_0002.json`,
+...) in `experiments/orders/`, so a single file can be passed straight to
+`main.py`:
 
 ```powershell
-python generate_orders.py --count 100 --output training_orders.json
+python generate_orders.py --count 5 --width 443 --output-dir experiments/orders
+python main.py experiments/orders/order_0001.json
 ```
 
-Run the genetic algorithm sequentially, one order after another. Each result
+Every order is built like this:
+
+- 3–6 different ordinary prints are picked at random (`--min-distinct`,
+  `--max-distinct`).
+- Each picked print is repeated 7–13 times (`--min-quantity`,
+  `--max-quantity`).
+- Combo and part records are skipped, and so are prints whose shorter side
+  does not fit across the roll width.
+- The same `--seed` (default 42) always produces the same orders.
+- If `data/print_database.json` does not exist, a small demo database with
+  6 prints is created automatically.
+
+Run the genetic algorithm sequentially, one order after another, on a JSON array of orders (`generate_training_data.py` reads a list, not a single order). Each result
 is saved in `data/training/` using the same layout JSON format as the
 existing training files, including `wysokosc_rolki`, `szerokosc_maszyny`, and
 all element coordinates and dimensions:
@@ -55,7 +71,8 @@ python generate_training_data.py training_orders.json --population-size 20 --gen
 - `integrations/` contains the lazy CorelDRAW COM connection.
 - `data/` contains the print database, training layouts, and accepted
   production layouts.
-- `parameter_search/` contains Optuna search code and its saved profiles.
+- `parameter_search/` contains Optuna search code, its saved profiles in
+  `artifacts/`, and the `optuna_parameter_search.ipynb` notebook that runs it.
 - `experiments/` contains notebooks and benchmark artifacts.
 
 The application uses English internal names and user-facing text. Existing
@@ -105,13 +122,19 @@ The `experiments/notebooks/` directory contains two experiment notebooks:
   evaluates the baseline and saves `benchmark_orders.json` for fair
   comparisons.
 
-Open either notebook in VS Code with the Jupyter extension, select the project
+The Optuna parameter search has its own notebook,
+`parameter_search/optuna_parameter_search.ipynb`. It selects training cases
+from `data/training/`, searches once over all cases and once per size
+category, and saves the results to `parameter_search/artifacts/`.
+
+Open any of the notebooks in VS Code with the Jupyter extension, select the project
 `.venv` interpreter, and run the cells from top to bottom. The dependencies
-`pandas`, `matplotlib`, and `numpy` are included in `pyproject.toml`.
+`pandas`, `matplotlib`, `numpy`, and `optuna` are included in `pyproject.toml`.
 
 ### Automatic settings by size category
 
-The parameter search creates independent Optuna studies for the `short`,
+The parameter search (`parameter_search/optuna_parameter_search.ipynb`)
+creates independent Optuna studies for the `short`,
 `medium`, and `tall` training categories. After the category searches have
 produced their results JSON files, the optimizer can use the best settings
 from the selected category:
